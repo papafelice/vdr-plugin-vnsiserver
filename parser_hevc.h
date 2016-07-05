@@ -36,13 +36,6 @@ class cParserHEVC : public cParser
 private:
   typedef struct hevc_private
   {
-    struct HDR_NAL
-    {
-       uint nal_unit_type;
-       uint nuh_layer_id;
-       uint nuh_temporal_id;
-    } hdr;
-
     struct PPS
     {
       int sps;
@@ -52,10 +45,18 @@ private:
     struct VCL_NAL
     {
       int pic_parameter_set_id; // slice
+      unsigned int first_slice_segment_in_pic_flag;
       unsigned int nal_unit_type;
     } vcl_nal;
 
   } hevc_private_t;
+
+  typedef struct HDR_NAL_t
+  {
+     uint nal_unit_type;
+     uint nuh_layer_id;
+     uint nuh_temporal_id;
+  } HDR_NAL;
 
   typedef struct mpeg_rational_s {
     int num;
@@ -93,6 +94,7 @@ private:
   };
 
   uint32_t        m_StartCode;
+  int             m_LastStartPos;
   bool            m_NeedSPS;
   bool            m_NeedPPS;
   int             m_Width;
@@ -102,13 +104,11 @@ private:
   hevc_private    m_streamData;
   int64_t         m_DTS;
   int64_t         m_PTS;
-  uint8_t        *m_rbspBuffer;
-  unsigned int    m_rbspBufferSize;
 
-  int Parse_HEVC(int buf_ptr, bool &complete);
-  bool Parse_PPS(uint8_t *buf, int len);
-  bool Parse_SLH(uint8_t *buf, int len, hevc_private::HDR_NAL hdr, hevc_private::VCL_NAL &vcl);
-  bool Parse_SPS(uint8_t *buf, int len, hevc_private::HDR_NAL hdr);
+  void Parse_HEVC(int buf_ptr, unsigned int NumBytesInNalUnit, bool *complete);
+  void Parse_PPS(uint8_t *buf, int len);
+  void Parse_SLH(uint8_t *buf, int len, HDR_NAL hdr, hevc_private::VCL_NAL &vcl);
+  void Parse_SPS(uint8_t *buf, int len, HDR_NAL hdr);
   bool IsFirstVclNal(hevc_private::VCL_NAL &vcl);
 
 public:
